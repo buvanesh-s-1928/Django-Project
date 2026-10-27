@@ -172,6 +172,34 @@ for _seed in ITEM_SEEDS:
     _seed.pop("footprint_sqf", None)
 
 
+# ------------------------------------------------------------------ #
+#  Real photography for every catalog item — bundled locally with     #
+#  the app (downloaded from picsum.photos / Unsplash-licensed corpus) #
+#  so the UI shows genuine images, never grey placeholders.          #
+# ------------------------------------------------------------------ #
+_ITEM_IMAGES = {
+    "AUR-ST-001": "item-1080.jpg", "AUR-ST-002": "item-1031.jpg",
+    "AUR-ST-003": "item-177.jpg",  "AUR-ST-004": "item-225.jpg",
+    "AUR-ST-005": "item-292.jpg",  "AUR-DC-006": "item-306.jpg",
+    "AUR-DC-007": "item-326.jpg",  "AUR-DC-008": "item-367.jpg",
+    "AUR-DC-009": "item-399.jpg",  "AUR-DC-010": "item-403.jpg",
+    "AUR-LT-011": "item-425.jpg",  "AUR-LT-012": "item-447.jpg",
+    "AUR-LT-013": "item-110.jpg",  "AUR-HO-014": "item-1043.jpg",
+    "AUR-HO-015": "item-1060.jpg", "AUR-HO-016": "item-1084.jpg",
+}
+for _seed in ITEM_SEEDS:
+    _img = _ITEM_IMAGES.get(_seed["sku"])
+    if _img:
+        _seed["image_url"] = f"/static/studio/items/{_img}"
+
+# Curated sample rooms (bundled static photography) used by the showcase
+# blueprints and the "Sample Rooms" picker in the workstation.
+SHOWCASE_ROOM_PHOTOS = {
+    "showcase-royal":  "/static/studio/rooms/living-royal.jpg",
+    "showcase-soiree": "/static/studio/rooms/loft-soiree.jpg",
+}
+
+
 def seed_aura_db(force=False):
     """Populate default themes, the 16-item catalog and 2 showcase blueprints.
 
@@ -208,18 +236,22 @@ def seed_aura_db(force=False):
                picks, summary, ros_start="17:00"):
         """Create/update a showcase blueprint with pinned items (zero overrun)."""
         theme = EventTheme.objects.get(code=theme_code)
+        defaults = {
+            "theme": theme, "host_name": host,
+            "event_date": date.today() + timedelta(days=21),
+            "room_width_ft": w, "room_depth_ft": d,
+            "guest_count": guests, "budget_inr": budget,
+            "status": EventBlueprint.Status.STAGED,
+            "ai_engine": "knapsack-local",
+            "ai_summary": summary,
+            "is_showcase": True,
+        }
+        photo = SHOWCASE_ROOM_PHOTOS.get(bp_code)
+        if photo:
+            defaults["photo_url_remote"] = photo
+            defaults["photo_source"] = "gallery"
         bp, created = EventBlueprint.objects.update_or_create(
-            title=title,
-            defaults={
-                "theme": theme, "host_name": host,
-                "event_date": date.today() + timedelta(days=21),
-                "room_width_ft": w, "room_depth_ft": d,
-                "guest_count": guests, "budget_inr": budget,
-                "status": EventBlueprint.Status.STAGED,
-                "ai_engine": "knapsack-local",
-                "ai_summary": summary,
-                "is_showcase": True,
-            },
+            title=title, defaults=defaults,
         )
         bp.run_of_show = _default_run_of_show(bp, ros_start)
         bp.save(update_fields=["run_of_show"])

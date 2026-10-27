@@ -70,7 +70,8 @@ class EventBlueprintAdmin(admin.ModelAdmin):
         ("Identity", {"fields": ("title", "theme", "host_name", "event_date", "is_showcase")}),
         ("Spatial Inputs", {"fields": ("room_width_ft", "room_depth_ft", "guest_count")}),
         ("Money", {"fields": ("budget_inr", "spent_inr", "status")}),
-        ("Room Photograph", {"fields": ("room_photo", "photo_preview",
+        ("Room Photograph", {"fields": ("room_photo", "photo_url_remote",
+                                        "photo_source", "photo_preview",
                                         "photo_width_px", "photo_height_px")}),
         ("AI Engine Output", {"fields": ("ai_engine", "ai_summary", "run_of_show")}),
         ("Timestamps", {"fields": ("created_at", "updated_at")}),
@@ -101,10 +102,11 @@ class EventBlueprintAdmin(admin.ModelAdmin):
 
     @admin.display(description="Preview")
     def photo_preview(self, obj):
-        if obj.room_photo:
+        url = obj.photo_display_url
+        if url:
             return format_html(
                 '<img src="{}" style="max-width:320px;border-radius:12px;'
-                'border:1px solid #cbd5e1"/>', obj.room_photo.url
+                'border:1px solid #cbd5e1"/>', url
             )
         return "No photograph uploaded."
 

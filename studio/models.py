@@ -171,6 +171,13 @@ class EventBlueprint(models.Model):
     room_photo = models.FileField(
         upload_to=room_photo_upload_to, null=True, blank=True, max_length=255
     )
+    photo_url_remote = models.URLField(
+        blank=True, max_length=500,
+        help_text="Alternative to uploading: a direct image URL the engine "
+                  "fetches server-side (used by gallery picks & pasted links).",
+    )
+    photo_source = models.CharField(max_length=16, blank=True, default="",
+                                    help_text="upload | gallery | url")
     photo_width_px = models.PositiveIntegerField(null=True, blank=True)
     photo_height_px = models.PositiveIntegerField(null=True, blank=True)
 
@@ -198,6 +205,15 @@ class EventBlueprint(models.Model):
     @property
     def room_area_sqft(self):
         return round(float(self.room_width_ft) * float(self.room_depth_ft), 1)
+
+    @property
+    def photo_display_url(self):
+        """Best available room image: uploaded file first, remote URL second."""
+        if self.room_photo:
+            return self.room_photo.url
+        if self.photo_url_remote:
+            return self.photo_url_remote
+        return None
 
     @property
     def budget_headroom(self):

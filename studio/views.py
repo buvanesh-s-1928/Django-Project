@@ -14,6 +14,7 @@ import json
 import logging
 import re
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.http import JsonResponse
@@ -76,7 +77,7 @@ def blueprint_payload(bp, with_pins=True):
         "engine": bp.ai_engine,
         "ai_summary": bp.ai_summary,
         "run_of_show": bp.run_of_show_list(),
-        "photo_url": bp.room_photo.url if bp.room_photo else None,
+        "photo_url": bp.photo_display_url,
         "room": {"width_ft": float(bp.room_width_ft),
                  "depth_ft": float(bp.room_depth_ft),
                  "area_sqft": bp.room_area_sqft},
@@ -111,10 +112,22 @@ def index(request):
         "staged_set__item"
     ).all()[:12]
 
+    # Curated sample rooms served from our own static folder (real photos,
+    # bundled with the app — no placeholders, works fully offline).
+    room_gallery = [
+        {"file": "studio/rooms/living-royal.jpg",  "label": "Cobalt Living Room"},
+        {"file": "studio/rooms/living-warm.jpg",   "label": "Cream Bouclé Lounge"},
+        {"file": "studio/rooms/veranda-green.jpg", "label": "Garden Veranda"},
+        {"file": "studio/rooms/hall-neutral.jpg",  "label": "Neutral Gallery Hall"},
+        {"file": "studio/rooms/dining-golden.jpg", "label": "Golden Dining Room"},
+        {"file": "studio/rooms/loft-soiree.jpg",   "label": "Evening Loft"},
+    ]
+
     context = {
         "themes": themes,
         "catalog": catalog,
         "blueprints": blueprints,
+        "room_gallery": room_gallery,
         "showcases": [blueprint_payload(bp, with_pins=False) for bp in blueprints
                       if bp.is_showcase],
         "vault": [blueprint_payload(bp, with_pins=False) for bp in blueprints],
@@ -125,6 +138,7 @@ def index(request):
                 "capacity": i.guest_capacity, "aura": i.aesthetic_score,
                 "material": i.material, "palette": i.palette_tag,
                 "blurb": i.blurb, "themes": i.theme_codes,
+                "image": i.image_url or "",
             } for i in catalog
         ],
         "themes_json": [
@@ -148,11 +162,37 @@ def index(request):
 def generate_plan(request):
     """Accepts multipart form-data:
         title, theme_code, guest_count, budget_inr, room_width_ft,
-        room_depth_ft, host_name, event_date, room_photo (file), gemini_key
-    Runs the AI Vision + Knapsack pipeline and returns the full plan JSON.
+        room_depth_ft, host_name, event_date, gemini_key, and ONE of:
+          • room_photo      — uploaded file (JPG/PNG/WEBP, ≤12 MB)
+          • photo_url       — direct image URL (pasted link)
+          • gallery_image   — static path of a curated sample room photo
+        Runs the AI Vision + Knapsack pipeline and returns the full plan JSON.
     """
     body = request.POST.dict()
     file_obj = request.FILES.get("room_photo")
+
+    # ---- resolve the room photograph from any of the three sources --------
+    gallery_path = (body.get("gallery_image") or "").strip()
+    remote_url = (body.get("photo_url") or "").strip()
+    if gallery_path:
+        # Whitelist: only our own bundled sample rooms may be referenced here.
+        if not gallery_path.startswith("studio/rooms/") or ".." in gallery_path:
+            return JsonResponse({"ok": False, "error": "Unknown gallery image."},
+                                status=400)
+        try:
+            from django.contrib.staticfiles import finders as sf_finders
+            abs_path = sf_finders.find(gallery_path)
+        except Exception:
+            abs_path = None
+        if not abs_path:
+            return JsonResponse({"ok": False,
+                                 "error": "Gallery image not found on server."},
+                                status=400)
+        remote_url = f"{settings.STATIC_URL}{gallery_path}"
+    if remote_url and not remote_url.startswith(("http://", "https://", "/")):
+        return JsonResponse({"ok": False,
+                             "error": "Image URL must start with http(s)://."},
+                            status=400)
 
     theme_code = (body.get("theme_code") or "").strip()
     theme = get_object_or_404(EventTheme, code=theme_code)
@@ -182,6 +222,16 @@ def generate_plan(request):
             )
             if file_obj:
                 bp.room_photo.save(file_obj.name, file_obj, save=True)
+                bp.photo_source = "upload"
+                bp.save(update_fields=["photo_source"])
+            elif remote_url:
+                absolute = remote_url
+                if remote_url.startswith("/"):
+                    base = request.build_absolute_uri("/")[:-1]
+                    absolute = (base or "http://127.0.0.1:8000") + remote_url
+                bp.photo_url_remote = absolute[:500]
+                bp.photo_source = "gallery" if gallery_path else "url"
+                bp.save(update_fields=["photo_url_remote", "photo_source"])
     except ValidationError as exc:
         return JsonResponse({"ok": False, "error": str(exc)}, status=400)
 
