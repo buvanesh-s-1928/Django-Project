@@ -292,8 +292,8 @@ footer b{color:var(--yellow);letter-spacing:.2em;font-size:10.5px;text-transform
     <span id="tele-engine">engine: knapsack-local · offline-safe</span>
     <span class="tele-spacer"></span>
     <span style="color:#8FA6CF">₹ CEILING LOCK</span>
-    <button class="tele-chip" id="btn-key-open" title="Attach a Google AI Studio key for Gemini Vision">
-      ⌘ API KEY · <b id="key-state">OFFLINE</b>
+    <button class="tele-chip" id="btn-key-open" title="Vision engine status — attach your own Google AI Studio (Gemini) key to override the server's Groq Vision">
+      ⌘ API KEY · <b id="key-state">{% if AURA_HAS_GROQ_KEY %}GROQ VISION{% else %}OFFLINE{% endif %}</b>
     </button>
     <a class="tele-chip" href="/admin/">ADMIN</a>
   </div>
@@ -507,7 +507,7 @@ footer b{color:var(--yellow);letter-spacing:.2em;font-size:10.5px;text-transform
     <span class="mono-label">Telemetry / Engine Access</span>
     <h3>Attach Google AI Studio Key</h3>
     <p>Paste a <b>Gemini API key</b> to let <i>{{ AURA_ENGINE_MODEL }}</i> visually audit your uploaded room photograph.
-       No key? Nothing breaks — the local Knapsack Budget Optimizer solves every plan offline.</p>
+    {% if AURA_HAS_GROQ_KEY %}This server already has <b>Groq Vision</b> active (<i>{{ AURA_GROQ_MODEL }}</i>) — no action needed; a Gemini key here simply overrides it for your session.{% else %}No key? Nothing breaks — the local Knapsack Budget Optimizer solves every plan offline.{% endif %}</p>
     <div class="field"><label>Gemini API Key</label>
       <input type="password" id="gemini-key" placeholder="AIza… (kept in your session only)" autocomplete="off"></div>
     <div class="key-actions">
@@ -550,7 +550,7 @@ function toast(msg, kind){
 
 /* ═════════════════ MARQUEE ═════════════════ */
 (function(){
-  const msgs = ["ZERO BUDGET OVERRUN — MATH ENFORCED","UPLOAD · PIN · PARTY","GEMINI VISION READS YOUR WALLS",
+  const msgs = ["ZERO BUDGET OVERRUN — MATH ENFORCED","UPLOAD · PIN · PARTY","GROQ LLAMA-4 SCOUT READS YOUR WALLS",
     "16 CRAFTED SKUs · ₹1,500–₹16,500","KNAPSACK SOLVER RUNS OFFLINE","DRAG PINS · LIVE RE-PRICE",
     "RUN-OF-SHOW AUTO-WRITTEN","₹ CEILING LOCK ENGAGED"];
   const half = msgs.map(m=>`<span>${m}<i>◆</i></span>`).join("");
@@ -558,12 +558,20 @@ function toast(msg, kind){
 })();
 
 /* ═════════════════ API KEY MODAL ═════════════════ */
+const SERVER_VISION = {% if AURA_HAS_GROQ_KEY %}"groq"{% else %}""{% endif %};
+const GROQ_MODEL_NAME = "{{ AURA_GROQ_MODEL }}";
 let GEMINI_KEY = sessionStorage.getItem("aura_key") || "";
+function visionLabel(){
+  if (GEMINI_KEY) return "gemini-2.5-flash vision + knapsack";
+  if (SERVER_VISION === "groq") return "llama-4-scout@groq vision + knapsack";
+  return "knapsack-local · offline-safe";
+}
 function paintKeyState(){
-  $("#key-state").textContent = GEMINI_KEY ? "VISION ON" : "OFFLINE";
-  $("#btn-key-open").classList.toggle("active", !!GEMINI_KEY);
-  $("#tele-engine").textContent = GEMINI_KEY
-    ? "engine: gemini-2.5-flash vision + knapsack" : "engine: knapsack-local · offline-safe";
+  const on = !!GEMINI_KEY || SERVER_VISION === "groq";
+  $("#key-state").textContent = GEMINI_KEY ? "VISION ON"
+    : (SERVER_VISION === "groq" ? "GROQ VISION" : "OFFLINE");
+  $("#btn-key-open").classList.toggle("active", on);
+  $("#tele-engine").textContent = "engine: " + visionLabel();
 }
 paintKeyState();
 $("#btn-key-open").onclick = ()=> { $("#gemini-key").value = GEMINI_KEY; $("#keymodal").classList.add("open"); };
@@ -572,9 +580,12 @@ $("#key-save").onclick = ()=>{
   GEMINI_KEY = $("#gemini-key").value.trim();
   GEMINI_KEY ? sessionStorage.setItem("aura_key", GEMINI_KEY) : sessionStorage.removeItem("aura_key");
   paintKeyState(); $("#keymodal").classList.remove("open");
-  toast(GEMINI_KEY ? "Gemini Vision armed for next solve ✦" : "Key removed — offline knapsack engaged", GEMINI_KEY?"ok":"");
+  toast(GEMINI_KEY ? "Gemini Vision armed for next solve ✦"
+        : (SERVER_VISION === "groq" ? "Gemini key removed — server Groq Vision still active ✦"
+                                    : "Key removed — offline knapsack engaged"),
+        GEMINI_KEY || SERVER_VISION === "groq" ? "ok" : "");
 };
-$("#key-clear").onclick = ()=>{ $("#gemini-key").value=""; GEMINI_KEY=""; sessionStorage.removeItem("aura_key"); paintKeyState(); toast("Vision key cleared"); };
+$("#key-clear").onclick = ()=>{ $("#gemini-key").value=""; GEMINI_KEY=""; sessionStorage.removeItem("aura_key"); paintKeyState(); toast(SERVER_VISION==="groq" ? "Local key cleared — Groq Vision remains active" : "Vision key cleared"); };
 $("#keymodal").addEventListener("click", e=>{ if(e.target.id==="keymodal") $("#keymodal").classList.remove("open"); });
 
 /* ═════════════════ FETCH HELPER ═════════════════ */

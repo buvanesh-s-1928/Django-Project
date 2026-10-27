@@ -7,4 +7,6 @@ def aura_context(request):
         "AURA_CURRENCY": settings.CURRENCY_SYMBOL,
         "AURA_ENGINE_MODEL": settings.GEMINI_MODEL,
         "AURA_HAS_SERVER_KEY": bool(settings.GEMINI_API_KEY),
+        "AURA_GROQ_MODEL": settings.GROQ_MODEL,
+        "AURA_HAS_GROQ_KEY": bool(getattr(settings, "GROQ_API_KEY", "")),
     }

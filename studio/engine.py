@@ -3,9 +3,13 @@ AURA STAGE // LUMINA STUDIO — The Budget-Matching Engine
 =========================================================
 Two cooperating brains:
 
-1. `gemini_vision_audit()`  — optional Google AI Studio Vision call to
-   `gemini-2.5-flash` via stdlib urllib ONLY (no requests / google SDK).
-   Reads the uploaded room photograph, returns a spatial narrative +
+1. Vision audits — optional, stdlib urllib ONLY (no requests / SDKs):
+   • `groq_vision_audit()`     — Groq OpenAI-compatible Vision API using the
+     server key from .env (GROQ_API_KEY), model `meta-llama/llama-4-scout`
+     (vision-capable, ultra-fast). Falls back to llama-4-sonar if needed.
+   • `gemini_vision_audit()`   — Google AI Studio Vision call to
+     `gemini-2.5-flash` when a user pastes their own Gemini key in the UI.
+   Both read the uploaded room photograph and return a spatial narrative +
    placement hints as JSON.
 
 2. `knapsack_optimize()`    — deterministic local optimizer that ALWAYS
@@ -16,8 +20,8 @@ Two cooperating brains:
      • utility = aesthetic score × value density, so every rupee buys aura
      • spatial pin allocator spreads survivors across photo quadrants
 
-If Gemini is unavailable (no key / offline / bad JSON), a robust heuristic
-narrative is generated locally instead. The plan NEVER fails.
+If no vision provider is available (no key / offline / bad JSON), a robust
+heuristic narrative is generated locally instead. The plan NEVER fails.
 """
 from __future__ import annotations
 
@@ -40,9 +44,9 @@ CATEGORY_ORDER = ["seating", "decor", "lighting", "hospitality"]
 
 
 # ====================================================================== #
-#  1. GEMINI VISION (stdlib urllib)                                       #
+#  Shared helpers — photo encoding + strict-JSON prompt                   #
 # ====================================================================== #
-GEMINI_SYSTEM_PROMPT = """You are AURA, the spatial director inside LUMINA STUDIO.
+VISION_SYSTEM_PROMPT = """You are AURA, the spatial director inside LUMINA STUDIO.
 You will receive ONE photograph of an Indian home event space plus structured
 inputs (room size, guests, ₹ budget, theme). Respond with STRICT JSON only:
 {
@@ -55,39 +59,126 @@ inputs (room size, guests, ₹ budget, theme). Respond with STRICT JSON only:
 No markdown fences, no commentary outside the JSON object."""
 
 
-def gemini_vision_audit(blueprint: EventBlueprint, api_key: str) -> dict | None:
-    """Query gemini-2.5-flash with the room photo. Returns parsed dict or None.
-
-    Uses only urllib/json/base64 — zero installs. Any network/parse failure
-    returns None so the caller falls back to the offline heuristic.
-    """
-    if not api_key or not blueprint.room_photo:
-        return None
-
+def _read_photo(blueprint: EventBlueprint):
+    """Return (raw_bytes, mime) for the room photo, or (None, None)."""
+    if not blueprint.room_photo:
+        return None, None
     try:
         with blueprint.room_photo.open("rb") as fh:
             raw = fh.read()
     except OSError as exc:
         logger.warning("AURA: cannot read room photo: %s", exc)
-        return None
-
-    # Cap payload at ~3.5 MB base64 to stay under request limits.
-    if len(raw) > 2_600_000:
-        return None
-
+        return None, None
+    if len(raw) > 2_600_000:  # cap payload ~3.5 MB base64 under request limits
+        return None, None
     mime = "image/jpeg"
     lowered = blueprint.room_photo.name.lower()
     if lowered.endswith(".png"):
         mime = "image/png"
     elif lowered.endswith(".webp"):
         mime = "image/webp"
+    return raw, mime
 
-    context = (
+
+def _blueprint_context(blueprint: EventBlueprint) -> str:
+    return (
         f"ROOM: {blueprint.room_width_ft}ft x {blueprint.room_depth_ft}ft "
         f"({blueprint.room_area_sqft} sqft). GUESTS: {blueprint.guest_count}. "
         f"BUDGET: Rs {blueprint.budget_inr}. THEME: {blueprint.theme.name} — "
         f"{blueprint.theme.tagline}. SPLIT: {blueprint.theme.budget_split_pct()}."
     )
+
+
+def _post_json(url: str, payload: dict, headers: dict, timeout: int) -> dict | None:
+    # Browser-like UA: Groq's edge (Cloudflare error 1010) blocks urllib's
+    # default python-urllib signature on some networks.
+    ua = ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+          "(KHTML, like Gecko) Chrome/124.0 Safari/537.36 AURA-Studio/1.0")
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", "User-Agent": ua, **headers},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+        detail = ""
+        if isinstance(exc, urllib.error.HTTPError):
+            try:
+                detail = " " + exc.read().decode("utf-8", "replace")[:200]
+            except OSError:
+                pass
+        logger.warning("AURA: vision call failed (%s%s) → trying next route.", exc, detail)
+        return None
+
+
+# ====================================================================== #
+#  1a. GROQ VISION (OpenAI-compatible chat/completions, stdlib urllib)    #
+# ====================================================================== #
+def groq_vision_audit(blueprint: EventBlueprint, api_key: str) -> dict | None:
+    """Audit the room photo via Groq's vision-capable Llama models.
+
+    Tries settings.GROQ_MODEL first, then GROQ_FALLBACK_MODELS. Any network,
+    quota or parse failure returns None so callers fall through to Gemini /
+    heuristic routes. Keys are never logged.
+    """
+    raw, mime = _read_photo(blueprint)
+    if not api_key or raw is None:
+        return None
+
+    data_url = f"data:{mime};base64,{base64.b64encode(raw).decode('ascii')}"
+    headers = {"Authorization": f"Bearer {api_key}"}
+
+    for model in [settings.GROQ_MODEL, *getattr(settings, "GROQ_FALLBACK_MODELS", [])]:
+        payload = {
+            "model": model,
+            "temperature": 0.35,
+            "max_completion_tokens": 1024,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": VISION_SYSTEM_PROMPT},
+                {"role": "user", "content": [
+                    {"type": "text", "text": _blueprint_context(blueprint)},
+                    {"type": "image_url",
+                     "image_url": {"url": data_url}},
+                ]},
+            ],
+        }
+        body = _post_json(settings.GROQ_ENDPOINT, payload, headers,
+                          settings.GROQ_TIMEOUT_SECONDS)
+        if body is None:
+            continue
+        try:
+            text = body["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError):
+            logger.warning("AURA: unexpected Groq payload shape (%s).", model)
+            continue
+        audit = _lenient_json(text)
+        if audit:
+            audit["_vision_model"] = model
+            return audit
+    return None
+
+
+# ====================================================================== #
+#  1b. GEMINI VISION (stdlib urllib)                                      #
+# ====================================================================== #
+GEMINI_SYSTEM_PROMPT = VISION_SYSTEM_PROMPT  # shared strict-JSON contract
+
+
+def gemini_vision_audit(blueprint: EventBlueprint, api_key: str) -> dict | None:
+    """Query gemini-2.5-flash with the room photo. Returns parsed dict or None.
+
+    Uses only urllib/json/base64 — zero installs. Any network/parse failure
+    returns None so the caller falls back to the offline heuristic.
+    """
+    raw, mime = _read_photo(blueprint)
+    if not api_key or raw is None:
+        return None
+
+    context = _blueprint_context(blueprint)
 
     url = settings.GEMINI_ENDPOINT.format(model=settings.GEMINI_MODEL)
     payload = {
@@ -107,17 +198,9 @@ def gemini_vision_audit(blueprint: EventBlueprint, api_key: str) -> dict | None:
         },
     }
 
-    req = urllib.request.Request(
-        url + f"?key={api_key}",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=settings.GEMINI_TIMEOUT_SECONDS) as resp:
-            body = json.loads(resp.read().decode("utf-8"))
-    except (urllib.error.URLError, TimeoutError, ValueError) as exc:
-        logger.warning("AURA: Gemini vision call failed (%s) → offline fallback.", exc)
+    body = _post_json(url + f"?key={api_key}", payload, {},
+                      settings.GEMINI_TIMEOUT_SECONDS)
+    if body is None:
         return None
 
     try:
@@ -126,7 +209,10 @@ def gemini_vision_audit(blueprint: EventBlueprint, api_key: str) -> dict | None:
         logger.warning("AURA: unexpected Gemini payload shape.")
         return None
 
-    return _lenient_json(text)
+    audit = _lenient_json(text)
+    if audit:
+        audit["_vision_model"] = settings.GEMINI_MODEL
+    return audit
 
 
 def _lenient_json(text: str) -> dict | None:
@@ -367,13 +453,27 @@ def build_run_of_show(blueprint: EventBlueprint, audit: dict) -> list[dict]:
 #  5. ORCHESTRATOR — solve + persist                                      #
 # ====================================================================== #
 def run_generation_pipeline(blueprint: EventBlueprint, api_key: str = "") -> dict:
-    """Full engine pass: audit → knapsack → persist pins → response payload."""
+    """Full engine pass: audit → knapsack → persist pins → response payload.
+
+    Vision routing:
+      • A key pasted in the browser modal is treated as a GEMINI key
+        (Google AI Studio format) and used against gemini-2.5-flash.
+      • Otherwise, if the server has GROQ_API_KEY (.env), Groq Vision
+        (meta-llama/llama-4-scout) audits the photo automatically.
+      • Failing both, the offline heuristic narrative keeps plans flowing.
+    The Knapsack Budget Optimizer always runs — Zero Budget Overrun holds
+    regardless of which vision brain supplied the audit.
+    """
     engine = "knapsack-local"
     audit = None
     if api_key:
         audit = gemini_vision_audit(blueprint, api_key)
         if audit:
-            engine = "gemini-2.5-flash + knapsack"
+            engine = f"{audit.get('_vision_model', settings.GEMINI_MODEL)} + knapsack"
+    if audit is None and getattr(settings, "GROQ_API_KEY", ""):
+        audit = groq_vision_audit(blueprint, settings.GROQ_API_KEY)
+        if audit:
+            engine = f"{audit.get('_vision_model', settings.GROQ_MODEL)}@groq + knapsack"
     if audit is None:
         audit = heuristic_audit(blueprint)
 
