@@ -1,7 +1,1 @@
-__pycache__/
-*.pyc
-db.sqlite3
-media/room_photos/*
-!media/room_photos/.gitkeep
-staticfiles/
-.env
+*.log
