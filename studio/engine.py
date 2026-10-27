@@ -60,24 +60,69 @@ No markdown fences, no commentary outside the JSON object."""
 
 
 def _read_photo(blueprint: EventBlueprint):
-    """Return (raw_bytes, mime) for the room photo, or (None, None)."""
-    if not blueprint.room_photo:
-        return None, None
-    try:
-        with blueprint.room_photo.open("rb") as fh:
-            raw = fh.read()
-    except OSError as exc:
-        logger.warning("AURA: cannot read room photo: %s", exc)
+    """Return (raw_bytes, mime) for the room photo, or (None, None).
+
+    Sources, in order: an uploaded FileField copy, else the remote URL the
+    server fetches once via stdlib urllib (gallery picks / pasted links).
+    """
+    raw = None
+    name = ""
+    if blueprint.room_photo:
+        try:
+            with blueprint.room_photo.open("rb") as fh:
+                raw = fh.read()
+            name = blueprint.room_photo.name
+        except OSError as exc:
+            logger.warning("AURA: cannot read room photo: %s", exc)
+            raw = None
+    if raw is None and blueprint.photo_url_remote:
+        raw = _fetch_remote_image(blueprint.photo_url_remote)
+        name = blueprint.photo_url_remote
+    if not raw:
         return None, None
     if len(raw) > 2_600_000:  # cap payload ~3.5 MB base64 under request limits
         return None, None
     mime = "image/jpeg"
-    lowered = blueprint.room_photo.name.lower()
-    if lowered.endswith(".png"):
+    lowered = name.lower()
+    if ".png" in lowered:
         mime = "image/png"
-    elif lowered.endswith(".webp"):
+    elif ".webp" in lowered:
+        mime = "image/webp"
+    # Sniff actual magic bytes — safer than trusting extensions.
+    if raw[:8] == b"\x89PNG\r\n\x1a\n":
+        mime = "image/png"
+    elif raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
         mime = "image/webp"
     return raw, mime
+
+
+def _fetch_remote_image(url: str) -> bytes | None:
+    """Download an image URL with stdlib urllib; validate it really is an image."""
+    import urllib.request
+
+    if not url.lower().startswith(("https://", "http://")):
+        return None
+    try:
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "Mozilla/5.0 (compatible; AURAStage/1.0)"}
+        )
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            ctype = (resp.headers.get("Content-Type") or "").lower()
+            data = resp.read(3_000_000)  # hard cap 3 MB
+        if not data:
+            return None
+        is_image = (
+            data[:3] == b"\xff\xd8\xff"          # JPEG
+            or data[:8] == b"\x89PNG\r\n\x1a\n"  # PNG
+            or (data[:4] == b"RIFF" and data[8:12] == b"WEBP")
+        )
+        if not is_image and "image" not in ctype:
+            logger.warning("AURA: remote URL is not an image (%s): %s", ctype, url)
+            return None
+        return data
+    except Exception as exc:  # noqa: BLE001 — network is best-effort
+        logger.warning("AURA: remote image fetch failed: %r", exc)
+        return None
 
 
 def _blueprint_context(blueprint: EventBlueprint) -> str:
@@ -534,5 +579,5 @@ def run_generation_pipeline(blueprint: EventBlueprint, api_key: str = "") -> dic
             "zero_overrun": spent <= budget,
         },
         "run_of_show": blueprint.run_of_show_list(),
-        "photo_url": blueprint.room_photo.url if blueprint.room_photo else None,
+        "photo_url": blueprint.photo_display_url,
     }

@@ -39,11 +39,32 @@ def _load_dotenv(path: Path) -> None:
 _load_dotenv(BASE_DIR / ".env")
 
 # ------------------------------------------------------------------ #
-#  Security                                                           #
+#  Security — deployable via environment variables                    #
+#                                                                     #
+#  Local dev  : defaults are safe (DEBUG on, host wildcard).          #
+#  Production : set in .env / platform env —                          #
+#      AURA_DEBUG=0                                                   #
+#      AURA_SECRET_KEY=<50-char random string>                        #
+#      AURA_ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com           #
+#      AURA_CSRF_TRUSTED_ORIGINS=https://yourdomain.com               #
 # ------------------------------------------------------------------ #
-SECRET_KEY = "django-insecure-aura-stage-lumina-0x7f3c9b2e-dev-only-key"
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
+def _csv(val):
+    return [v.strip() for v in val.split(",") if v.strip()]
+
+SECRET_KEY = os.environ.get(
+    "AURA_SECRET_KEY", "django-insecure-aura-stage-lumina-0x7f3c9b2e-dev-only-key"
+)
+DEBUG = os.environ.get("AURA_DEBUG", "1").lower() not in ("0", "false", "no")
+ALLOWED_HOSTS = _csv(os.environ.get("AURA_ALLOWED_HOSTS", "*")) or ["*"]
+CSRF_TRUSTED_ORIGINS = _csv(os.environ.get("AURA_CSRF_TRUSTED_ORIGINS", ""))
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
 
 # ------------------------------------------------------------------ #
 #  Applications                                                       #
