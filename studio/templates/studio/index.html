@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AURA STAGE // LUMINA STUDIO — AI Event Planner & Spatial Furniture Budget Planner</title>
+<meta name="description" content="Upload your room. Set your ₹ budget. AURA pins real furniture, lighting and decor onto your photograph — with guaranteed zero budget overrun."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+<style>
+/* ════════════════════════════════════════════════════════════════════
+   AURA STAGE // LUMINA STUDIO — Swiss Editorial · Cryo Glass
+   Royal Blue #1E3A8A × Warm Cream #F6F1E7 × Signal Yellow #FFD400
+   ════════════════════════════════════════════════════════════════════ */
+:root{
+  --navy:#0B1B3A; --royal:#1E3A8A; --royal-soft:#3B5BB5;
+  --cream:#F6F1E7; --cream-deep:#EDE4D3; --ice:#EAF1FB;
+  --ink:#101623; --ink-soft:#4A5568; --line:rgba(16,22,35,.12);
+  --yellow:#FFD400; --green:#15803D; --red:#B91C1C;
+  --glass:rgba(255,255,255,.55); --glass-brd:rgba(255,255,255,.75);
+  --shadow-xl:0 30px 80px -24px rgba(11,27,58,.35);
+  --shadow-md:0 14px 40px -14px rgba(11,27,58,.28);
+  --r-lg:26px; --r-md:16px; --r-sm:10px;
+  --font:"Manrope",system-ui,sans-serif;
+  --serif:"Instrument Serif",Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--cream);color:var(--ink);
+  font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--yellow);color:var(--navy)}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit;font-size:14px;color:var(--ink)}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1280px;margin:0 auto;padding:0 clamp(18px,4vw,44px)}
+.mono-label{font-size:10.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--royal)}
+.hairline{height:1px;background:var(--line);border:0}
+
+/* ── cryo glass ─────────────────────────────────────────────── */
+.cryo{background:var(--glass);backdrop-filter:blur(18px) saturate(160%);
+  -webkit-backdrop-filter:blur(18px) saturate(160%);
+  border:1px solid var(--glass-brd);border-radius:var(--r-lg);
+  box-shadow:var(--shadow-md)}
+
+/* ══ 1 · NAVY TELEMETRY BAR ═════════════════════════════════ */
+#telemetry{position:sticky;top:0;z-index:80;background:var(--navy);color:#DCE6F7;
+  border-bottom:1px solid rgba(255,255,255,.08)}
+#telemetry .row{display:flex;align-items:center;gap:18px;height:44px;font-size:11px;
+  letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.tele-dot{width:7px;height:7px;border-radius:50%;background:#22C55E;
+  box-shadow:0 0 10px #22C55E;display:inline-block;margin-right:6px}
+.tele-chip{padding:4px 12px;border:1px solid rgba(255,255,255,.18);border-radius:99px;
+  color:#DCE6F7;transition:.2s;font-size:10.5px;letter-spacing:.14em}
+.tele-chip:hover{border-color:var(--yellow);color:var(--yellow)}
+.tele-chip.active{background:var(--yellow);color:var(--navy);border-color:var(--yellow)}
+.tele-spacer{flex:1}
+#tele-engine{color:#8FA6CF;font-weight:500;text-transform:none;letter-spacing:.04em}
+
+/* ══ 2 · EDITORIAL HERO ═════════════════════════════════════ */
+header.hero{position:relative;background:linear-gradient(178deg,var(--cream) 0%,var(--ice) 62%,var(--cream-deep) 100%);
+  padding:clamp(48px,8vh,96px) 0 120px;overflow:hidden}
+.arch-ornaments{position:absolute;inset:0;pointer-events:none;opacity:.5}
+.arch-ornaments svg{position:absolute}
+.brand-mark{display:inline-flex;align-items:baseline;gap:2px;transform:rotate(-7deg);
+  transform-origin:left center;margin-bottom:26px}
+.brand-mark .aura{font-weight:800;font-size:clamp(34px,4.6vw,58px);letter-spacing:-.04em;color:var(--navy)}
+.brand-mark .stage{font-family:var(--serif);font-style:italic;font-size:clamp(28px,3.8vw,48px);color:var(--royal)}
+.brand-mark .slash{font-weight:300;color:var(--ink-soft);margin:0 10px;font-size:.6em}
+.hero h1{font-size:clamp(30px,4.2vw,52px);font-weight:800;letter-spacing:-.035em;
+  line-height:1.04;max-width:15ch;color:var(--navy)}
+.hero h1 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--royal)}
+.hero p.lede{margin-top:20px;max-width:52ch;color:var(--ink-soft);font-size:16px;font-weight:500}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:44px;align-items:center}
+.hero-stats{display:flex;gap:34px;margin-top:34px}
+.hero-stats b{display:block;font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--navy)}
+.hero-stats span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
+/* tilted showcase cards */
+.showcase-stack{position:relative;height:420px}
+.sc-card{position:absolute;width:74%;border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--shadow-xl);transition:.45s cubic-bezier(.2,.8,.2,1);cursor:pointer}
+.sc-card img{width:100%;height:100%;object-fit:cover;display:block}
+.sc-card .sc-meta{position:absolute;left:0;right:0;bottom:0;padding:16px 18px;
+  background:linear-gradient(to top,rgba(11,27,58,.88),transparent);color:#fff}
+.sc-card .sc-meta b{font-size:14.5px;letter-spacing:-.01em}
+.sc-card .sc-meta span{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#B9C9E8}
+.sc-card:nth-child(1){top:6%;left:0;transform:rotate(-5deg);z-index:3}
+.sc-card:nth-child(2){top:16%;right:0;transform:rotate(4deg);z-index:2}
+.sc-card:nth-child(3){bottom:0;left:12%;transform:rotate(-1.5deg);z-index:1}
+.sc-card:hover{transform:rotate(0deg) scale(1.035);z-index:9}
+.sc-ph{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+  background:repeating-linear-gradient(135deg,#132A52 0 22px,#0B1B3A 22px 44px);color:#8FA6CF;
+  font-size:11px;letter-spacing:.24em;text-transform:uppercase}
+
+/* ══ 3 · ANGLED YELLOW MARQUEE ══════════════════════════════ */
+.marquee-band{background:var(--yellow);transform:rotate(-1deg) scaleX(1.04);
+  margin:-56px 0 40px;padding:13px 0;overflow:hidden;position:relative;z-index:20;
+  box-shadow:0 12px 30px -12px rgba(11,27,58,.4);border-top:2px solid var(--navy);
+  border-bottom:2px solid var(--navy)}
+.marquee-track{display:flex;gap:0;width:max-content;animation:mq 34s linear infinite}
+.marquee-track span{white-space:nowrap;font-weight:800;font-size:13px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--navy);padding:0 26px}
+.marquee-track span i{font-style:normal;color:var(--royal);margin-left:26px;font-weight:600}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ══ generic section ═══════════════════════════════════════ */
+section{padding:64px 0}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:34px}
+.sec-head h2{font-size:clamp(24px,3vw,38px);font-weight:800;letter-spacing:-.035em;color:var(--navy);line-height:1}
+.sec-head h2 em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--royal)}
+.sec-head .mono-label{text-align:right}
+
+/* ══ 4 · WORKSTATION (upload + pinboard) ═══════════════════ */
+#workstation{display:grid;grid-template-columns:360px minmax(0,1fr);gap:26px;align-items:start}
+.console{padding:26px;display:grid;gap:18px}
+.field label{display:block;font-size:10.5px;font-weight:800;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--ink-soft);margin-bottom:7px}
+.field input,.field select{width:100%;padding:11px 14px;border-radius:var(--r-sm);
+  border:1.5px solid var(--line);background:rgba(255,255,255,.75);outline:none;transition:.2s;font-weight:600}
+.field input:focus,.field select:focus{border-color:var(--royal);box-shadow:0 0 0 4px rgba(30,58,138,.12)}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dropzone{border:2px dashed rgba(30,58,138,.4);border-radius:var(--r-md);padding:22px;
+  text-align:center;color:var(--royal);font-weight:700;font-size:13px;transition:.2s;cursor:pointer;
+  background:rgba(234,241,251,.5)}
+.dropzone:hover,.dropzone.drag{background:rgba(234,241,251,.95);border-color:var(--navy)}
+.dropzone small{display:block;color:var(--ink-soft);font-weight:500;margin-top:5px;font-size:11px}
+.btn-ignite{width:100%;padding:15px;border-radius:99px;background:var(--navy);color:var(--yellow);
+  font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:12.5px;transition:.25s;
+  box-shadow:var(--shadow-md)}
+.btn-ignite:hover{background:var(--royal);transform:translateY(-2px)}
+.btn-ignite:disabled{opacity:.45;transform:none;cursor:wait}
+.budget-readout{display:flex;justify-content:space-between;font-size:12px;font-weight:800;
+  letter-spacing:.06em;color:var(--ink-soft)}
+.budget-readout #headroom.ok{color:var(--green)} .budget-readout #headroom.bad{color:var(--red)}
+
+/* pinboard */
+.pinboard-wrap{display:grid;gap:18px}
+#pinboard{position:relative;border-radius:var(--r-lg);overflow:hidden;min-height:480px;
+  background:repeating-linear-gradient(135deg,#0F2344 0 30px,#0B1B3A 30px 60px);
+  box-shadow:var(--shadow-xl);display:flex;align-items:center;justify-content:center}
+#pinboard img.room-shot{width:100%;height:100%;object-fit:contain;display:block;position:relative;z-index:1}
+.pb-empty{color:#8FA6CF;text-align:center;padding:40px;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
+/* cryo price pin */
+.pin{position:absolute;z-index:5;transform:translate(-50%,-100%);cursor:grab;user-select:none;touch-action:none}
+.pin:active{cursor:grabbing}
+.pin .bubble{display:flex;align-items:center;gap:8px;padding:7px 12px 7px 8px;border-radius:99px;
+  background:rgba(255,255,255,.62);backdrop-filter:blur(14px) saturate(170%);
+  border:1px solid rgba(255,255,255,.85);box-shadow:0 10px 24px -8px rgba(11,27,58,.5);
+  transition:.2s;white-space:nowrap}
+.pin:hover .bubble{background:#fff;transform:scale(1.05)}
+.pin .cat-dot{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  font-size:11px;color:#fff;font-weight:800;flex:none}
+.pin .pname{font-size:11px;font-weight:800;color:var(--navy);max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.pin .pprice{font-size:11px;font-weight:800;color:var(--royal)}
+.pin .px{margin-left:2px;width:16px;height:16px;border-radius:50%;background:var(--navy);color:#fff;
+  font-size:10px;display:grid;place-items:center;opacity:0;transition:.2s}
+.pin:hover .px{opacity:1}
+.pin .stem{width:2px;height:14px;background:rgba(255,255,255,.8);margin:0 auto}
+.pin .anchor{width:8px;height:8px;border-radius:50%;background:var(--yellow);margin:-4px auto 0;
+  box-shadow:0 0 0 4px rgba(255,212,0,.25)}
+.cat-seating{background:#1E3A8A}.cat-decor{background:#B45309}.cat-lighting{background:#CA8A04}.cat-hospitality{background:#15803D}
+
+/* copilot bar */
+.copilot{display:flex;gap:10px;padding:10px 12px;border-radius:99px;align-items:center}
+.copilot .spark{font-size:16px}
+.copilot input{flex:1;border:none;background:transparent;outline:none;font-weight:600;padding:8px 6px}
+.copilot button{padding:10px 20px;border-radius:99px;background:var(--royal);color:#fff;
+  font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;transition:.2s}
+.copilot button:hover{background:var(--navy)}
+.plan-meter{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.meter-cell{padding:16px 18px;border-radius:var(--r-md);text-align:left}
+.meter-cell b{display:block;font-size:21px;font-weight:800;letter-spacing:-.03em;color:var(--navy)}
+.meter-cell span{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+.meter-cell.zero b{color:var(--green)}
+
+/* ══ 5 · DUAL-CONTRAST CARDS ═══════════════════════════════ */
+.duo-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+.card-navy{background:var(--navy);color:#E6EEFC;border-radius:var(--r-lg);padding:30px;
+  position:relative;overflow:hidden;box-shadow:var(--shadow-xl)}
+.card-ice{background:var(--ice);color:var(--ink);border-radius:var(--r-lg);padding:30px;
+  border:1px solid var(--line);position:relative;overflow:hidden;box-shadow:var(--shadow-md)}
+.wm{position:absolute;right:-14px;bottom:-26px;font-family:var(--serif);font-style:italic;
+  font-size:120px;line-height:1;pointer-events:none}
+.card-navy .wm{color:rgba(255,255,255,.06)} .card-ice .wm{color:rgba(30,58,138,.08)}
+.card-navy .mono-label{color:var(--yellow)} .card-ice .mono-label{color:var(--royal)}
+.duo-cards h3{font-size:22px;font-weight:800;letter-spacing:-.03em;margin:8px 0 14px}
+.audit-text{font-size:13.5px;line-height:1.65;color:#C7D4EF;font-weight:500}
+.risk-li{display:flex;gap:8px;font-size:12.5px;color:#FCD34D;margin-top:8px;font-weight:600}
+/* timeline */
+.timeline{list-style:none;position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(var(--royal),var(--yellow))}
+.timeline li{position:relative;padding:0 0 18px 12px}
+.timeline li::before{content:"";position:absolute;left:-20px;top:5px;width:11px;height:11px;
+  border-radius:50%;background:var(--cream);border:3px solid var(--royal)}
+.timeline .t-time{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:var(--royal)}
+.timeline b{display:block;font-size:14px;letter-spacing:-.01em}
+.timeline p{font-size:12px;color:var(--ink-soft)}
+/* BOM table */
+table.bom{width:100%;border-collapse:collapse;font-size:13px}
+table.bom th{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);
+  text-align:left;padding:8px 10px;border-bottom:2px solid var(--navy)}
+table.bom td{padding:9px 10px;border-bottom:1px solid var(--line);font-weight:600}
+table.bom td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.bom tfoot td{border:none;font-weight:800;font-size:14px;padding-top:12px}
+.zero-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;
+  background:#DCFCE7;color:var(--green);font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+
+/* ══ 6 · CATALOG GRID ═════════════════════════════════════ */
+.cat-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+.chip{padding:8px 18px;border-radius:99px;border:1.5px solid var(--line);font-size:11.5px;
+  font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);transition:.2s;background:rgba(255,255,255,.6)}
+.chip:hover{border-color:var(--royal);color:var(--royal)}
+.chip.on{background:var(--navy);color:var(--yellow);border-color:var(--navy)}
+#catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.item-card{padding:20px;display:flex;flex-direction:column;gap:9px;border-radius:var(--r-md);
+  transition:.25s;position:relative}
+.item-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-xl)}
+.item-card .sku{font-size:9.5px;letter-spacing:.2em;color:var(--ink-soft);font-weight:800}
+.item-card h4{font-size:15px;font-weight:800;letter-spacing:-.02em;line-height:1.25;color:var(--navy)}
+.item-card .meta{font-size:11.5px;color:var(--ink-soft);font-weight:600}
+.item-card .blurb{font-size:12px;color:var(--ink-soft);line-height:1.5}
+.item-card .price-row{display:flex;align-items:center;justify-content:space-between;margin-top:auto}
+.item-card .price{font-size:19px;font-weight:800;color:var(--royal);letter-spacing:-.03em}
+.aura-meter{display:flex;gap:3px;align-items:center}
+.aura-meter i{width:5px;height:14px;border-radius:2px;background:var(--cream-deep)}
+.aura-meter i.f{background:var(--yellow)}
+.btn-add{padding:9px 16px;border-radius:99px;background:var(--navy);color:#fff;font-size:11px;
+  font-weight:800;letter-spacing:.1em;text-transform:uppercase;transition:.2s}
+.btn-add:hover{background:var(--royal)}
+.btn-add:disabled{opacity:.4;cursor:not-allowed}
+
+/* ══ 7 · VAULT + LIGHTBOX ═════════════════════════════════ */
+#vault-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.vault-card{overflow:hidden;border-radius:var(--r-lg);cursor:pointer;transition:.25s;position:relative}
+.vault-card:hover{transform:rotate(-1deg) translateY(-4px);box-shadow:var(--shadow-xl)}
+.vault-card .vc-img{aspect-ratio:16/10;background:repeating-linear-gradient(135deg,#132A52 0 22px,#0B1B3A 22px 44px);
+  display:flex;align-items:center;justify-content:center;color:#8FA6CF;font-size:10px;letter-spacing:.2em;text-transform:uppercase;overflow:hidden}
+.vault-card .vc-img img{width:100%;height:100%;object-fit:cover}
+.vault-card .vc-body{padding:16px 18px;background:rgba(255,255,255,.72);backdrop-filter:blur(10px)}
+.vault-card .vc-body b{font-size:14.5px;color:var(--navy);letter-spacing:-.02em;display:block}
+.vault-card .vc-body span{font-size:11px;color:var(--ink-soft);font-weight:700;letter-spacing:.06em}
+.pill-status{position:absolute;top:12px;left:12px;padding:4px 12px;border-radius:99px;
+  font-size:9.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;background:var(--yellow);color:var(--navy)}
+#lightbox{position:fixed;inset:0;z-index:200;background:rgba(11,27,58,.85);backdrop-filter:blur(12px);
+  display:none;align-items:center;justify-content:center;padding:28px}
+#lightbox.open{display:flex}
+.lb-panel{max-width:980px;width:100%;max-height:88vh;overflow:auto;border-radius:var(--r-lg);
+  background:var(--cream);padding:30px;position:relative;box-shadow:var(--shadow-xl)}
+.lb-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;
+  background:var(--navy);color:#fff;font-size:16px;display:grid;place-items:center}
+
+/* ══ API KEY MODAL ════════════════════════════════════════ */
+#keymodal{position:fixed;inset:0;z-index:220;background:rgba(11,27,58,.6);backdrop-filter:blur(8px);
+  display:none;align-items:center;justify-content:center;padding:24px}
+#keymodal.open{display:flex}
+.key-panel{width:440px;max-width:100%;padding:30px;border-radius:var(--r-lg);background:var(--cream);box-shadow:var(--shadow-xl)}
+.key-panel h3{font-size:20px;font-weight:800;letter-spacing:-.03em;color:var(--navy)}
+.key-panel p{font-size:12.5px;color:var(--ink-soft);margin:8px 0 18px}
+.key-panel .hint{font-size:11px;margin-top:10px}
+.key-actions{display:flex;gap:10px;margin-top:16px}
+.key-actions .btn-ignite{width:auto;padding:12px 24px}
+.btn-ghost{padding:12px 20px;border-radius:99px;border:1.5px solid var(--line);font-weight:800;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.btn-ghost:hover{border-color:var(--navy);color:var(--navy)}
+
+/* toast */
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(120px);z-index:300;
+  padding:14px 26px;border-radius:99px;background:var(--navy);color:#fff;font-weight:700;font-size:13px;
+  box-shadow:var(--shadow-xl);transition:.4s cubic-bezier(.2,.8,.2,1);max-width:88vw;text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.err{background:var(--red)} #toast.ok{background:var(--green)}
+
+footer{background:var(--navy);color:#8FA6CF;padding:44px 0;margin-top:40px;font-size:12px}
+footer .row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer b{color:var(--yellow);letter-spacing:.2em;font-size:10.5px;text-transform:uppercase}
+
+@media(max-width:980px){
+  #workstation{grid-template-columns:1fr}
+  .hero-grid{grid-template-columns:1fr}.showcase-stack{height:340px}
+  .plan-meter{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ 1 · NAVY TELEMETRY BAR ═════════════════════════════ -->
+<div id="telemetry">
+  <div class="wrap row">
+    <span><span class="tele-dot"></span>LUMINA&nbsp;OS&nbsp;v6.1.2</span>
+    <span id="tele-engine">engine: knapsack-local · offline-safe</span>
+    <span class="tele-spacer"></span>
+    <span style="color:#8FA6CF">₹ CEILING LOCK</span>
+    <button class="tele-chip" id="btn-key-open" title="Attach a Google AI Studio key for Gemini Vision">
+      ⌘ API KEY · <b id="key-state">OFFLINE</b>
+    </button>
+    <a class="tele-chip" href="/admin/">ADMIN</a>
+  </div>
+</div>
+
+<!-- ══ 2 · EDITORIAL HERO ═════════════════════════════════ -->
+<header class="hero">
+  <div class="arch-ornaments" aria-hidden="true">
+    <svg width="560" height="560" viewBox="0 0 560 560" fill="none" style="top:-120px;right:-80px">
+      <g stroke="#1E3A8A" stroke-opacity=".22" stroke-width="1">
+        <path d="M80 520 V220 A200 200 0 0 1 480 220 V520"/>
+        <path d="M120 520 V240 A160 160 0 0 1 440 240 V520"/>
+        <path d="M160 520 V260 A120 120 0 0 1 400 260 V520"/>
+        <path d="M200 520 V280 A80 80 0 0 1 360 280 V520"/>
+        <path d="M240 520 V300 A40 40 0 0 1 320 300 V520"/>
+        <line x1="40" y1="520" x2="520" y2="520"/><line x1="40" y1="480" x2="520" y2="480"/>
+      </g>
+    </svg>
+    <svg width="380" height="380" viewBox="0 0 380 380" fill="none" style="bottom:-60px;left:-90px">
+      <g stroke="#0B1B3A" stroke-opacity=".14" stroke-width="1">
+        <circle cx="190" cy="190" r="180"/><circle cx="190" cy="190" r="140"/>
+        <circle cx="190" cy="190" r="100"/><line x1="10" y1="190" x2="370" y2="190"/>
+        <line x1="190" y1="10" x2="190" y2="370"/>
+      </g>
+    </svg>
+  </div>
+  <div class="wrap hero-grid">
+    <div>
+      <div class="brand-mark"><span class="aura">AURA</span><span class="slash">//</span><span class="stage">Stage</span></div>
+      <h1>Your room, <em>staged</em> to the last rupee.</h1>
+      <p class="lede">Photograph any space, declare a ₹ ceiling and guest count.
+        The AURA Vision engine reads light, depth and traffic lines — then pins real
+        furniture, lighting and decor onto your photo. <b>Zero budget overrun is
+        mathematically enforced.</b></p>
+      <div class="hero-stats">
+        <div><b>{{ catalog|length }}</b><span>Crafted SKUs</span></div>
+        <div><b>{{ themes|length }}</b><span>Theme DNA</span></div>
+        <div><b>0%</b><span>Overrun Tolerance</span></div>
+      </div>
+    </div>
+    <div class="showcase-stack" id="hero-showcases">
+      {% for sc in showcases %}
+      <div class="sc-card" data-bp="{{ sc.id }}" title="Open {{ sc.title }}">
+        {% if sc.photo_url %}<img src="{{ sc.photo_url }}" alt="{{ sc.title }}">
+        {% else %}<div class="sc-ph" style="height:240px">Showcase · {{ sc.theme.name }}</div>{% endif %}
+        <div class="sc-meta"><span>{{ sc.theme.name }} · {{ sc.guest_count }} guests</span>
+          <b>₹{{ sc.budget|floatformat:0 }} ceiling</b></div>
+      </div>
+      {% empty %}
+      <div class="sc-card"><div class="sc-ph" style="height:260px">Lumina Showcase</div></div>
+      <div class="sc-card"><div class="sc-ph" style="height:260px">Spatial Pinboard</div></div>
+      <div class="sc-card"><div class="sc-ph" style="height:260px">Zero Overrun</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</header>
+
+<!-- ══ 3 · ANGLED YELLOW MARQUEE ══════════════════════════ -->
+<div class="marquee-band" aria-hidden="true">
+  <div class="marquee-track" id="marquee">
+    <!-- JS duplicates content for seamless loop -->
+  </div>
+</div>
+
+<main class="wrap">
+
+<!-- ══ 4 · ROOM UPLOAD & SPATIAL PINBOARD ════════════════ -->
+<section id="stage">
+  <div class="sec-head">
+    <div><span class="mono-label">Interactive Workstation / 01</span>
+      <h2>Room Upload <em>&amp;</em> Spatial Pinboard</h2></div>
+    <span class="mono-label">Drag pins · re-price live<br>ceiling enforced server-side</span>
+  </div>
+
+  <div id="workstation">
+    <!-- console -->
+    <form class="cryo console" id="plan-form" enctype="multipart/form-data">
+      <div class="field"><label>Blueprint Title</label>
+        <input type="text" name="title" placeholder="Diwali Dinner · Anand Residence" maxlength="140"></div>
+      <div class="field"><label>Event Theme</label>
+        <select name="theme_code">
+          {% for t in themes %}<option value="{{ t.code }}">{{ t.name }} — {{ t.budget_split_pct }}</option>{% endfor %}
+        </select></div>
+      <div class="duo">
+        <div class="field"><label>Guests</label>
+          <input type="number" name="guest_count" value="24" min="1" max="400"></div>
+        <div class="field"><label>Budget ₹</label>
+          <input type="number" name="budget_inr" value="60000" min="1000" step="500"></div>
+      </div>
+      <div class="duo">
+        <div class="field"><label>Width ft</label>
+          <input type="number" name="room_width_ft" value="14" min="6" max="120" step="0.5"></div>
+        <div class="field"><label>Depth ft</label>
+          <input type="number" name="room_depth_ft" value="16" min="6" max="120" step="0.5"></div>
+      </div>
+      <div class="dropzone" id="dropzone">
+        ⇪ Drop room photograph<input type="file" name="room_photo" id="room-photo" accept="image/*" hidden>
+        <small id="dz-name">JPG / PNG / WEBP · stays on this machine unless you attach a Gemini key</small>
+      </div>
+      <div class="budget-readout">
+        <span>SPENT <b id="spent-live">₹0</b></span>
+        <span id="headroom" class="ok">HEADROOM ₹0</span>
+      </div>
+      <button class="btn-ignite" type="submit" id="btn-generate">⚡ Generate Stage Plan</button>
+    </form>
+
+    <!-- pinboard -->
+    <div class="pinboard-wrap">
+      <div id="pinboard">
+        <div class="pb-empty">Upload a room photograph →<br>AURA will pin the optimised plan here</div>
+      </div>
+      <div class="cryo copilot">
+        <span class="spark">✦</span>
+        <input id="copilot-input" placeholder="Copilot: “raise budget to 80000”, “more lighting”, “30 guests”, “fresh plan”…">
+        <button id="copilot-go">Re-optimize</button>
+      </div>
+      <div class="plan-meter">
+        <div class="meter-cell cryo"><b id="m-budget">—</b><span>Ceiling ₹</span></div>
+        <div class="meter-cell cryo"><b id="m-spent">—</b><span>Committed ₹</span></div>
+        <div class="meter-cell cryo"><b id="m-util">—</b><span>Utilisation</span></div>
+        <div class="meter-cell cryo zero"><b id="m-zero">✔ 0%</b><span>Overrun</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hairline">
+
+<!-- ══ 5 · DUAL-CONTRAST: AUDIT / TIMELINE / BOM ══════════ -->
+<section id="intelligence">
+  <div class="sec-head">
+    <div><span class="mono-label">Intelligence Layer / 02</span>
+      <h2>The Plan, <em>Explained</em></h2></div>
+    <span class="mono-label" id="engine-tag">awaiting first solve</span>
+  </div>
+  <div class="duo-cards">
+    <div class="card-navy">
+      <span class="wm">Audit</span>
+      <span class="mono-label">AI Spatial Audit</span>
+      <h3>What the camera told us</h3>
+      <p class="audit-text" id="audit-summary">Run a plan to receive the Gemini Vision (or offline heuristic) spatial audit of your room — light read, focal wall, traffic axis and staging risks.</p>
+      <div id="audit-risks"></div>
+    </div>
+    <div class="card-ice">
+      <span class="wm">Flow</span>
+      <span class="mono-label">Chronological Run-of-Show</span>
+      <h3>The evening, sequenced</h3>
+      <ul class="timeline" id="ros-list">
+        <li><span class="t-time">— : —</span><b>No plan yet</b><p>The engine writes your minute-by-minute event flow here.</p></li>
+      </ul>
+    </div>
+    <div class="card-ice" style="grid-column:1/-1">
+      <span class="wm">BOM</span>
+      <span class="mono-label">Itemised Bill of Materials</span>
+      <h3>Every rupee, accounted <span class="zero-badge" id="bom-badge" style="display:none">✔ Zero Overrun</span></h3>
+      <div style="overflow-x:auto">
+      <table class="bom">
+        <thead><tr><th>SKU</th><th>Item</th><th>Category</th><th>Qty</th><th style="text-align:right">Unit ₹</th><th style="text-align:right">Line ₹</th><th style="text-align:right">Pin X/Y</th></tr></thead>
+        <tbody id="bom-body"><tr><td colspan="7" style="color:var(--ink-soft)">Empty until first generation.</td></tr></tbody>
+        <tfoot><tr><td colspan="5">TOTAL COMMITTED</td><td class="num" id="bom-total">₹0</td><td class="num" id="bom-vs" style="color:var(--green)"></td></tr></tfoot>
+      </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="hairline">
+
+<!-- ══ 6 · CURATED FURNITURE CATALOG ══════════════════════ -->
+<section id="catalog">
+  <div class="sec-head">
+    <div><span class="mono-label">Provisioning / 03</span>
+      <h2>Curated <em>Furniture</em> Catalog</h2></div>
+    <span class="mono-label">₹1,500 – ₹16,500 band<br>+ Add to Room respects your ceiling</span>
+  </div>
+  <div class="cat-filters" id="cat-filters">
+    <button class="chip on" data-cat="all">All</button>
+    <button class="chip" data-cat="seating">Seating</button>
+    <button class="chip" data-cat="decor">Decor</button>
+    <button class="chip" data-cat="lighting">Lighting</button>
+    <button class="chip" data-cat="hospitality">Hospitality</button>
+  </div>
+  <div id="catalog-grid"><!-- JS renders from embedded JSON --></div>
+</section>
+
+<hr class="hairline">
+
+<!-- ══ 7 · SAVED BLUEPRINTS VAULT ═════════════════════════ -->
+<section id="vault">
+  <div class="sec-head">
+    <div><span class="mono-label">Archive / 04</span>
+      <h2>Saved <em>Blueprints</em> Vault</h2></div>
+    <span class="mono-label">click a card → lightbox preview</span>
+  </div>
+  <div id="vault-grid"><!-- JS renders --></div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <div><b>AURA STAGE // LUMINA STUDIO</b><br>
+      AI Event Planner & Spatial Furniture Budget Planner — Django 6.1.2 · zero-install engine core</div>
+    <div style="text-align:right">Gemini Vision optional · Knapsack solver always local<br>
+      <span style="color:var(--yellow)">ZERO OVERRUN GUARANTEED</span></div>
+  </div>
+</footer>
+
+<!-- ══ API KEY MODAL ══════════════════════════════════════ -->
+<div id="keymodal">
+  <div class="key-panel">
+    <span class="mono-label">Telemetry / Engine Access</span>
+    <h3>Attach Google AI Studio Key</h3>
+    <p>Paste a <b>Gemini API key</b> to let <i>{{ AURA_ENGINE_MODEL }}</i> visually audit your uploaded room photograph.
+       No key? Nothing breaks — the local Knapsack Budget Optimizer solves every plan offline.</p>
+    <div class="field"><label>Gemini API Key</label>
+      <input type="password" id="gemini-key" placeholder="AIza… (kept in your session only)" autocomplete="off"></div>
+    <div class="key-actions">
+      <button class="btn-ignite" id="key-save">Save &amp; Activate Vision</button>
+      <button class="btn-ghost" id="key-clear">Clear</button>
+      <button class="btn-ghost" id="key-close">Close</button>
+    </div>
+    <p class="hint">Requests go straight from this Django server to generativelanguage.googleapis.com via stdlib urllib. Keys are never logged.</p>
+  </div>
+</div>
+
+<!-- ══ LIGHTBOX ═══════════════════════════════════════════ -->
+<div id="lightbox">
+  <div class="lb-panel" id="lb-panel">
+    <button class="lb-close" id="lb-close">✕</button>
+    <div id="lb-content"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ═════════════════ EMBEDDED SERVER STATE ═════════════════ */
+const CATALOG = {{ catalog_json|safe }};
+const THEMES  = {{ themes_json|safe }};
+const VAULT   = {{ vault|safe }};
+const CSRF    = "{{ csrf_token }}";
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const inr = n => "₹" + Math.round(n).toLocaleString("en-IN");
+let CURRENT_BP = null;          // blueprint id under edit
+let PINS = [];                  // live pin array
+
+/* ═════════════════ TOAST ═════════════════ */
+let toastT;
+function toast(msg, kind){
+  const t = $("#toast"); t.textContent = msg; t.className = "show " + (kind||"");
+  clearTimeout(toastT); toastT = setTimeout(()=>t.className="", 3400);
+}
+
+/* ═════════════════ MARQUEE ═════════════════ */
+(function(){
+  const msgs = ["ZERO BUDGET OVERRUN — MATH ENFORCED","UPLOAD · PIN · PARTY","GEMINI VISION READS YOUR WALLS",
+    "16 CRAFTED SKUs · ₹1,500–₹16,500","KNAPSACK SOLVER RUNS OFFLINE","DRAG PINS · LIVE RE-PRICE",
+    "RUN-OF-SHOW AUTO-WRITTEN","₹ CEILING LOCK ENGAGED"];
+  const half = msgs.map(m=>`<span>${m}<i>◆</i></span>`).join("");
+  $("#marquee").innerHTML = half + half;   /* seamless loop */
+})();
+
+/* ═════════════════ API KEY MODAL ═════════════════ */
+let GEMINI_KEY = sessionStorage.getItem("aura_key") || "";
+function paintKeyState(){
+  $("#key-state").textContent = GEMINI_KEY ? "VISION ON" : "OFFLINE";
+  $("#btn-key-open").classList.toggle("active", !!GEMINI_KEY);
+  $("#tele-engine").textContent = GEMINI_KEY
+    ? "engine: gemini-2.5-flash vision + knapsack" : "engine: knapsack-local · offline-safe";
+}
+paintKeyState();
+$("#btn-key-open").onclick = ()=> { $("#gemini-key").value = GEMINI_KEY; $("#keymodal").classList.add("open"); };
+$("#key-close").onclick = ()=> $("#keymodal").classList.remove("open");
+$("#key-save").onclick = ()=>{
+  GEMINI_KEY = $("#gemini-key").value.trim();
+  GEMINI_KEY ? sessionStorage.setItem("aura_key", GEMINI_KEY) : sessionStorage.removeItem("aura_key");
+  paintKeyState(); $("#keymodal").classList.remove("open");
+  toast(GEMINI_KEY ? "Gemini Vision armed for next solve ✦" : "Key removed — offline knapsack engaged", GEMINI_KEY?"ok":"");
+};
+$("#key-clear").onclick = ()=>{ $("#gemini-key").value=""; GEMINI_KEY=""; sessionStorage.removeItem("aura_key"); paintKeyState(); toast("Vision key cleared"); };
+$("#keymodal").addEventListener("click", e=>{ if(e.target.id==="keymodal") $("#keymodal").classList.remove("open"); });
+
+/* ═════════════════ FETCH HELPER ═════════════════ */
+async function api(path, opts={}){
+  const headers = Object.assign({"X-CSRFToken": CSRF}, opts.headers||{});
+  const res = await fetch(path, Object.assign({headers, credentials:"same-origin"}, opts));
+  const data = await res.json().catch(()=>({ok:false,error:"Bad response"}));
+  if(!res.ok || data.ok===false) throw new Error(data.error || ("HTTP "+res.status));
+  return data;
+}
+function postJSON(path, body){ return api(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); }
+
+/* ═════════════════ GENERATE PLAN ═════════════════ */
+const form = $("#plan-form");
+$("#btn-generate").addEventListener("click", async e=>{
+  e.preventDefault();
+  if(!CURRENT_BP && !$("#room-photo").files.length){
+    toast("Add a room photograph first — the pinboard needs walls to hang dreams on.","err"); return;
+  }
+  const btn = $("#btn-generate"); btn.disabled = true; btn.textContent = "⚳ Solving knapsack…";
+  try{
+    const fd = new FormData(form);
+    if(GEMINI_KEY) fd.append("gemini_key", GEMINI_KEY);
+    const plan = await api("/api/generate-plan/", {method:"POST", body:fd});
+    ingestPlan(plan);
+    toast(`Plan staged · ${plan.bom.length} SKUs pinned · headroom ${inr(plan.totals.headroom)}`,"ok");
+    refreshVault();
+  }catch(err){ toast(err.message,"err"); }
+  finally{ btn.disabled=false; btn.textContent="⚡ Generate Stage Plan"; }
+});
+
+/* dropzone */
+const dz = $("#dropzone"), fi = $("#room-photo");
+dz.onclick = ()=>fi.click();
+["dragover","dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{
+  e.preventDefault(); dz.classList.toggle("drag", ev==="dragover");
+  if(ev==="drop" && e.dataTransfer.files.length){ fi.files = e.dataTransfer.files; showFile(); }
+}));
+fi.addEventListener("change", showFile);
+function showFile(){ if(fi.files.length){ $("#dz-name").textContent = "📎 " + fi.files[0].name; } }
+
+/* ═════════════════ INGEST + RENDER ═════════════════ */
+function ingestPlan(plan){
+  CURRENT_BP = plan.blueprint_id;
+  PINS = plan.bom.map(b=>({pin_id:null, sku:b.sku, name:b.name, category:b.category,
+    qty:b.qty, unit_price:b.unit_price, line_total:b.line_total, x:b.pin.x, y:b.pin.y, note:b.note}));
+  // map pin ids via detail fetch
+  api(`/api/blueprint/${plan.blueprint_id}/`).then(d=>{ PINS = d.pins; renderBoard(d.photo_url); }).catch(()=>renderBoard(plan.photo_url));
+  renderPhoto(plan.photo_url);
+  renderAudit(plan.audit); renderROS(plan.run_of_show); renderBOM(plan.bom, plan.totals);
+  updateMeters(plan.totals);
+  $("#engine-tag").textContent = "engine: " + plan.engine;
+  if(plan.copilot_changes) toast("✦ Copilot: " + plan.copilot_changes.join(" · "), "ok");
+}
+
+function renderPhoto(url){
+  const pb = $("#pinboard");
+  pb.innerHTML = "";
+  if(url){
+    const img = document.createElement("img");
+    img.className="room-shot"; img.src=url; img.alt="Your room";
+    img.onerror=()=>{ pb.innerHTML='<div class="pb-empty">Image failed to load</div>'; };
+    pb.appendChild(img);
+  } else {
+    pb.innerHTML='<div class="pb-empty">No photograph — showing abstract stage canvas</div>';
+  }
+}
+function renderBoard(url){ renderPhoto(url||($("#pinboard img")||{}).src); PINS.forEach(drawPin); }
+
+const CAT_ICON = {seating:"S", decor:"D", lighting:"L", hospitality:"H"};
+function drawPin(p){
+  const el = document.createElement("div");
+  el.className = "pin"; el.dataset.pinId = p.pin_id || ("tmp-"+p.sku);
+  el.style.left = p.x + "%"; el.style.top = p.y + "%";
+  el.innerHTML = `<div class="bubble">
+      <span class="cat-dot cat-${p.category}">${CAT_ICON[p.category]||"•"}</span>
+      <span class="pname">${p.name}${p.qty>1?" ×"+p.qty:""}</span>
+      <span class="pprice">${inr(p.line_total)}</span>
+      <span class="px" title="Remove">×</span></div>
+    <div class="stem"></div><div class="anchor"></div>`;
+  $("#pinboard").appendChild(el);
+  makeDraggable(el, p);
+  el.querySelector(".px").addEventListener("click", ev=>{
+    ev.stopPropagation();
+    if(!p.pin_id){ el.remove(); return; }
+    api(`/api/blueprint/${CURRENT_BP}/remove-pin/`,{method:"POST",
+      headers:{"Content-Type":"application/json"},body:JSON.stringify({pin_id:p.pin_id})})
+      .then(r=>{ el.remove(); PINS=PINS.filter(q=>q!==p); afterMutation(r); });
+  });
+}
+function makeDraggable(el, p){
+  let drag=false;
+  el.addEventListener("pointerdown", e=>{
+    if(e.target.classList.contains("px")) return;
+    drag=true; el.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  el.addEventListener("pointermove", e=>{
+    if(!drag) return;
+    const r = $("#pinboard").getBoundingClientRect();
+    p.x = Math.min(Math.max((e.clientX-r.left)/r.width*100, 2), 98);
+    p.y = Math.min(Math.max((e.clientY-r.top)/r.height*100, 4), 96);
+    el.style.left=p.x+"%"; el.style.top=p.y+"%";
+  });
+  el.addEventListener("pointerup", ()=>{
+    if(!drag) return; drag=false;
+    if(p.pin_id && CURRENT_BP){
+      postJSON(`/api/blueprint/${CURRENT_BP}/pin/`, {pin_id:p.pin_id, x:p.x, y:p.y}).catch(err=>toast(err.message,"err"));
+    }
+  });
+}
+
+function renderAudit(a){
+  if(!a) return;
+  $("#audit-summary").textContent = a.summary || "—";
+  $("#audit-risks").innerHTML = (a.risk_notes||[]).map(r=>`<div class="risk-li">⚠ ${r}</div>`).join("")
+    + (a.traffic_axis? `<div class="risk-li" style="color:#8FA6CF">axis: ${a.traffic_axis} · light: ${a.light_read||"—"}</div>`:"");
+}
+function renderROS(ros){
+  $("#ros-list").innerHTML = (ros||[]).map(s=>
+    `<li><span class="t-time">${s.time}</span><b>${s.title}</b><p>${s.detail||""}</p></li>`).join("");
+}
+function renderBOM(bom, totals){
+  $("#bom-body").innerHTML = bom.map(b=>
+    `<tr><td class="mono-label" style="letter-spacing:.1em">${b.sku}</td><td>${b.name}</td>
+     <td><span class="cat-dot cat-${b.category}" style="display:inline-grid;width:18px;height:18px;font-size:9px">${CAT_ICON[b.category]}</span> ${b.category}</td>
+     <td class="num">${b.qty}</td><td class="num">${inr(b.unit_price)}</td>
+     <td class="num"><b>${inr(b.line_total)}</b></td>
+     <td class="num" style="color:var(--ink-soft)">${b.pin.x.toFixed(0)} / ${b.pin.y.toFixed(0)}</td></tr>`).join("")
+    || '<tr><td colspan="7">Engine found no compliant set — widen the budget.</td></tr>';
+  $("#bom-total").textContent = inr(totals.spent);
+  $("#bom-vs").textContent = `of ${inr(totals.budget)} (${totals.utilisation_pct}%)`;
+  $("#bom-badge").style.display = totals.zero_overrun ? "inline-flex" : "none";
+}
+function updateMeters(t){
+  $("#m-budget").textContent = inr(t.budget);
+  $("#m-spent").textContent  = inr(t.spent);
+  $("#m-util").textContent   = t.utilisation_pct + "%";
+  $("#m-zero").textContent   = t.zero_overrun ? "✔ 0%" : "▲ OVER";
+  $("#m-zero").classList.toggle("zero", t.zero_overrun);
+  $("#spent-live").textContent = inr(t.spent);
+  const hr = $("#headroom");
+  hr.textContent = "HEADROOM " + inr(t.headroom);
+  hr.className = t.headroom >= 0 ? "ok" : "bad";
+}
+function afterMutation(r){
+  const spent=r.spent, budget=parseFloat($('[name=budget_inr]').value)||spent;
+  const head=(budget-spent);
+  updateMeters({budget, spent, headroom:head, utilisation_pct:+(spent/budget*100).toFixed(1), zero_overrun:spent<=budget});
+  api(`/api/blueprint/${CURRENT_BP}/`).then(d=>{ renderBOM(d.pins.map(p=>({sku:p.sku,name:p.name,category:p.category,qty:p.qty,unit_price:p.unit_price,line_total:p.line_total,pin:{x:p.x,y:p.y}})), d.budget?{budget:d.budget,spent:d.spent,headroom:d.headroom,utilisation_pct:+(d.spent/d.budget*100).toFixed(1),zero_overrun:true}:null); });
+}
+
+/* ═════════════════ COPILOT ═════════════════ */
+$("#copilot-go").addEventListener("click", copilotSend);
+$("#copilot-input").addEventListener("keydown", e=>{ if(e.key==="Enter") copilotSend(); });
+async function copilotSend(){
+  if(!CURRENT_BP){ toast("Generate a plan before talking to the copilot.","err"); return; }
+  const prompt = $("#copilot-input").value.trim(); if(!prompt) return;
+  $("#copilot-go").textContent="Solving…";
+  try{
+    const body = {blueprint_id:CURRENT_BP, prompt};
+    if(GEMINI_KEY) body.gemini_key = GEMINI_KEY;
+    const plan = await postJSON("/api/copilot/", body);
+    ingestPlan(plan); $("#copilot-input").value="";
+  }catch(err){ toast(err.message,"err"); }
+  finally{ $("#copilot-go").textContent="Re-optimize"; }
+}
+
+/* ═════════════════ CATALOG ═════════════════ */
+function auraMeter(score){
+  const n = Math.round(score/2);
+  return `<span class="aura-meter" title="aesthetic ${score}/10">${Array.from({length:5},(_,i)=>`<i class="${i<n?'f':''}"></i>`).join("")}</span>`;
+}
+function renderCatalog(filter="all"){
+  const items = CATALOG.filter(c=>filter==="all"||c.category===filter);
+  $("#catalog-grid").innerHTML = items.map(c=>`
+    <div class="item-card cryo">
+      <span class="sku">${c.sku} · ${c.palette||""}</span>
+      <h4>${c.name}</h4>
+      <div class="meta">${c.material||c.category} · ${c.footprint} sqft${c.capacity?` · seats ${c.capacity}`:""}</div>
+      <p class="blurb">${c.blurb}</p>
+      <div class="price-row">
+        <span class="price">${inr(c.price)}</span>${auraMeter(c.aura)}
+      </div>
+      <button class="btn-add" data-id="${c.id}">+ Add to Room</button>
+    </div>`).join("");
+  $$(".btn-add").forEach(b=>b.onclick=()=>addToRoom(+b.dataset.id, b));
+}
+$$("#cat-filters .chip").forEach(ch=>ch.onclick=()=>{
+  $$("#cat-filters .chip").forEach(c=>c.classList.remove("on"));
+  ch.classList.add("on"); renderCatalog(ch.dataset.cat);
+});
+async function addToRoom(itemId, btn){
+  if(!CURRENT_BP){ toast("Generate or open a blueprint first — the room must exist before it can be furnished.","err"); return; }
+  btn.disabled=true;
+  try{
+    const r = await postJSON(`/api/blueprint/${CURRENT_BP}/add-item/`, {item_id:itemId});
+    PINS.push(r.pin); drawPin(r.pin);
+    const bp = await api(`/api/blueprint/${CURRENT_BP}/`);
+    renderBOM(bp.pins.map(p=>({...p, pin:{x:p.x,y:p.y}})), {budget:bp.budget,spent:bp.spent,headroom:bp.headroom,utilisation_pct:+(bp.spent/bp.budget*100).toFixed(1),zero_overrun:bp.spent<=bp.budget});
+    updateMeters({budget:bp.budget,spent:bp.spent,headroom:bp.headroom,utilisation_pct:+(bp.spent/bp.budget*100).toFixed(1),zero_overrun:true});
+    toast(`Pinned “${r.pin.name}” · headroom ${inr(r.headroom)}`,"ok");
+  }catch(err){ toast(err.message,"err"); }
+  finally{ btn.disabled=false; }
+}
+
+/* ═════════════════ VAULT + LIGHTBOX ═════════════════ */
+function renderVault(list){
+  $("#vault-grid").innerHTML = list.map(v=>`
+    <div class="vault-card cryo" data-bp="${v.id}">
+      <span class="pill-status">${v.is_showcase?"SHOWCASE":v.status}</span>
+      <div class="vc-img">${v.photo_url?`<img src="${v.photo_url}">`:"Spatial Blueprint"}</div>
+      <div class="vc-body"><b>${v.title}</b>
+        <span>${v.theme.name} · ${v.guest_count} guests · ${inr(v.budget)} ceiling · ${inr(v.spent)} committed</span></div>
+    </div>`).join("") || '<p style="color:var(--ink-soft)">No blueprints yet — generate your first stage plan above.</p>';
+  $$(".vault-card").forEach(c=>c.onclick=()=>openLightbox(+c.dataset.bp));
+}
+async function refreshVault(){
+  try{ const d = await api("/api/blueprints/"); renderVault(d.blueprints); }catch(e){}
+}
+async function openLightbox(id){
+  try{
+    const d = await api(`/api/blueprint/${id}/`);
+    $("#lb-content").innerHTML = `
+      <span class="mono-label">Blueprint № ${String(d.id).padStart(3,"0")} · ${d.engine}</span>
+      <h2 style="font-size:26px;letter-spacing:-.03em;color:var(--navy);margin:6px 0 2px">${d.title}</h2>
+      <p style="font-size:12px;color:var(--ink-soft);font-weight:700">${d.theme.name} · ${d.room.width_ft}×${d.room.depth_ft} ft · ${d.guest_count} guests · ${d.created_at}</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px">
+        <div style="grid-column:1/-1;border-radius:14px;overflow:hidden;background:var(--navy);min-height:220px;display:flex;align-items:center;justify-content:center">
+          ${d.photo_url?`<img src="${d.photo_url}" style="width:100%;object-fit:contain">`:'<span style="color:#8FA6CF;font-size:11px;letter-spacing:.2em">NO PHOTOGRAPH</span>'}
+        </div>
+        <div class="cryo" style="padding:18px"><span class="mono-label">Budget</span>
+          <b style="display:block;font-size:22px;color:var(--navy);margin-top:6px">${inr(d.spent)} / ${inr(d.budget)}</b>
+          <span style="color:${d.headroom>=0?'var(--green)':'var(--red)'};font-weight:800">headroom ${inr(d.headroom)}</span></div>
+        <div class="cryo" style="padding:18px"><span class="mono-label">Staged Pins</span>
+          <b style="display:block;font-size:22px;color:var(--navy);margin-top:6px">${d.pins.length} SKUs</b>
+          <span style="font-size:11px;color:var(--ink-soft)">${d.pins.map(p=>p.sku).join(" · ")}</span></div>
+      </div>
+      <p style="margin-top:16px;font-size:13px;color:var(--ink-soft);line-height:1.6">${d.ai_summary||"—"}</p>
+      <button class="btn-ignite" style="margin-top:14px" onclick="loadIntoWorkstation(${d.id})">⇱ Open in Workstation</button>`;
+    $("#lightbox").classList.add("open");
+    window.__lbData = d;
+  }catch(err){ toast(err.message,"err"); }
+}
+window.loadIntoWorkstation = function(id){
+  const d = window.__lbData; if(!d) return;
+  CURRENT_BP = id; PINS = d.pins;
+  renderBoard(d.photo_url);
+  renderAudit({summary:d.ai_summary});
+  renderROS(d.run_of_show);
+  renderBOM(d.pins.map(p=>({sku:p.sku,name:p.name,category:p.category,qty:p.qty,unit_price:p.unit_price,line_total:p.line_total,pin:{x:p.x,y:p.y}})),
+            {budget:d.budget,spent:d.spent,headroom:d.headroom,utilisation_pct:+(d.spent/d.budget*100).toFixed(1),zero_overrun:d.spent<=d.budget});
+  updateMeters({budget:d.budget,spent:d.spent,headroom:d.headroom,utilisation_pct:+(d.spent/d.budget*100).toFixed(1),zero_overrun:d.spent<=d.budget});
+  $("#engine-tag").textContent="engine: "+d.engine;
+  $("#lightbox").classList.remove("open");
+  document.getElementById("stage").scrollIntoView({behavior:"smooth"});
+  toast(`Loaded “${d.title}” into the workstation`,"ok");
+};
+$("#lb-close").onclick=()=>$("#lightbox").classList.remove("open");
+$("#lightbox").addEventListener("click",e=>{ if(e.target.id==="lightbox") $("#lightbox").classList.remove("open"); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ $("#lightbox").classList.remove("open"); $("#keymodal").classList.remove("open"); }});
+
+/* hero showcase cards → lightbox */
+$$(".sc-card[data-bp]").forEach(c=>c.onclick=()=>openLightbox(+c.dataset.bp));
+
+/* ═════════════════ BOOT ═════════════════ */
+renderCatalog("all");
+renderVault(VAULT);
+</script>
+</body>
+</html>
